@@ -19,9 +19,9 @@ for filename in os.listdir('.'):
     #     date=mod_date)
     directory = os.path.join('{year:0>4}'.format(year=mod_date.year),
                              '{month:0>2}'.format(month=mod_date.month))
-    print '{filename} will be moved to {directory}'.format(
+    print ('{filename} will be moved to {directory}'.format(
         filename=filename,
-        directory=directory)
+        directory=directory))
 
     try:
         os.makedirs(directory)
