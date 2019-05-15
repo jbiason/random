@@ -14,10 +14,14 @@ public class Compo {
 
 		Doubler doubler = new Doubler();
 		PlusTwo plusTwo = new PlusTwo();
-		Printer printer = new Printer();
+		Printer printer = new Printer(doubler.andThen(plusTwo));
+		// ^ for the awesomer version, passing the Function to
+		//   the constructor wouldn't be necessary.
 
 		List<Long> result = Stream.of(2L, 4L, 5L, 7L)
-			.peek(doubler.andThen(plusTwo).andThen(printer))
+			// this would be awesomer
+			// .peek(doubler.andThen(plusTwo).andThen(printer))
+			.peek(printer)
 			.collect(Collectors.toList());
 		System.out.println("Result: " + result);
 	}
@@ -37,9 +41,16 @@ public class Compo {
 	}
 
 	private static class Printer implements Consumer<Long> {
+
+		Function processor;
+
+		public Printer(Function processor) {
+			this.processor = processor;
+		}
+
 		@Override
 		public void accept(Long input) {
-			System.out.println("Consumer: " + input);
+			System.out.println("Consumer: " + processor.apply(input));
 		}
 	}
 }
