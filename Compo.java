@@ -24,6 +24,12 @@ public class Compo {
 			.peek(printer)
 			.collect(Collectors.toList());
 		System.out.println("Result: " + result);
+
+		ToString toString = new ToString();
+		ToInteger toInteger = new ToInteger();
+
+		Function<Long, Integer> f = toString.andThen(toInteger);
+		System.out.println("Conversion: " + f.apply(12L));
 	}
 
 	private static class Doubler implements Function<Long, Long> {
@@ -42,15 +48,29 @@ public class Compo {
 
 	private static class Printer implements Consumer<Long> {
 
-		Function processor;
+		Function<Long, Long> processor;
 
-		public Printer(Function processor) {
+		public Printer(Function<Long, Long> processor) {
 			this.processor = processor;
 		}
 
 		@Override
 		public void accept(Long input) {
 			System.out.println("Consumer: " + processor.apply(input));
+		}
+	}
+
+	private static class ToString implements Function<Long, String> {
+		@Override
+		public String apply(Long input) {
+			return input.toString();
+		}
+	}
+
+	private static class ToInteger implements Function<String, Integer> {
+		@Override
+		public Integer apply(String input) {
+			return Integer.parseInt(input);
 		}
 	}
 }
