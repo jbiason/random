@@ -1,0 +1,10 @@
+[package]
+name = "toml-groups"
+version = "0.1.0"
+authors = ["Julio Biason <julio.biason@pm.me>"]
+edition = "2018"
+
+[dependencies]
+serde = "*"
+serde_derive = "*"
+toml = "0.5"
