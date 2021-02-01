@@ -1,0 +1,9 @@
+[package]
+name = "cons"
+version = "0.1.0"
+description = "Tests and experimentations with Console"
+authors = ["Julio Biason <julio.biason@pm.me>"]
+edition = "2018"
+
+[dependencies]
+console = "0.14"
