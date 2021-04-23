@@ -5,6 +5,8 @@ use markup5ever_rcdom::NodeData;
 use markup5ever_rcdom::RcDom;
 use std::borrow::Borrow;
 use std::default::Default;
+use textwrap::fill;
+use textwrap::Options;
 
 fn go_children(input: &Handle, result: &mut String) {
     for child in input.children.borrow().iter() {
@@ -41,8 +43,12 @@ fn walk(input: &Handle, result: &mut String) {
                             .iter()
                             .find(|attr| attr.name.local.to_string() == "class");
                         if let Some(class) = classes {
-                            if !class.value.to_string().contains("invisible") {
+                            let classes = class.value.to_string();
+                            if !classes.contains("invisible") {
                                 go_children(input, result);
+                                if classes.contains("ellipsis") {
+                                    result.push_str("...");
+                                }
                             }
                         } else {
                             go_children(input, result);
@@ -98,5 +104,8 @@ fn main() {
     let mut result = String::new();
     walk(&dom.document, &mut result);
     println!("---------------------------------");
-    println!("{}", result);
+    let options = Options::new(70)
+        .initial_indent("  ")
+        .subsequent_indent("  ");
+    println!("{}", fill(&result.trim(), &options));
 }
