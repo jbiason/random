@@ -6,7 +6,35 @@ use markup5ever_rcdom::RcDom;
 use std::borrow::Borrow;
 use std::default::Default;
 use textwrap::fill;
+use textwrap::NoHyphenation;
 use textwrap::Options;
+
+// This go_children/walk is stupid, but I shot myself in the foot by adding
+// things after the children, link on links.
+//
+// So, I'm rethinking this, and I'll, basically redo the same thing Tendril is
+// doing by building a tree of elements.
+//
+// So, say, if we have
+//
+// <p>Text text<a href="link"><span visible>the link</span><span
+// invisible>other text</span></a>, <i>for italics</i>, <pre>is for code</pre>
+// </p>
+//
+// That would build
+//                  root
+//                 / | |\Code(is for code)
+//   Text(Text text) | Italic(for italics)
+//                Link(the link, link)
+//
+// Tree things to do, then:
+// 1. Walk the DOM tree and build the text tree.
+// 2. Tree elements could return if the DOM three should continue processing or
+//    ignore incoming children (that would cut the "invisible span" processing,
+//    for example).
+// 3. Build a walker for the new tree, to produce the final text. And, on that,
+//    we could work on the text wrap, 'cause there are elements that can't be
+//    wrapped (for example, Links)
 
 fn go_children(input: &Handle, result: &mut String) {
     for child in input.children.borrow().iter() {
@@ -45,7 +73,7 @@ fn walk(input: &Handle, result: &mut String) {
                         if let Some(class) = classes {
                             let classes = class.value.to_string();
                             if !classes.contains("invisible") {
-                                go_children(input, result);
+                                go_children(input, result); // bollocks!
                                 if classes.contains("ellipsis") {
                                     result.push_str("...");
                                 }
@@ -106,6 +134,7 @@ fn main() {
     println!("---------------------------------");
     let options = Options::new(70)
         .initial_indent("  ")
-        .subsequent_indent("  ");
+        .subsequent_indent("  ")
+        .splitter(NoHyphenation);
     println!("{}", fill(&result.trim(), &options));
 }
