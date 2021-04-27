@@ -1,9 +1,12 @@
 use html5ever::parse_document;
+use html5ever::tendril::StrTendril;
 use html5ever::tendril::TendrilSink;
+use markup5ever::interface::Attribute;
 use markup5ever_rcdom::Handle;
 use markup5ever_rcdom::NodeData;
 use markup5ever_rcdom::RcDom;
 use std::borrow::Borrow;
+use std::cell::RefCell;
 use std::default::Default;
 use textwrap::fill;
 use textwrap::NoHyphenation;
@@ -22,10 +25,12 @@ use textwrap::Options;
 // </p>
 //
 // That would build
-//                  root
-//                 / | |\Code(is for code)
-//   Text(Text text) | Italic(for italics)
-//                Link(the link, link)
+//                  root --------------------------\
+//                 / |  \                           Code()
+//   Text(Text text) |   ------ Italic()             |
+//                Link(link)        |             Text(is for code)
+//                   |        Text(for italics)
+//              Text(the link)
 //
 // Tree things to do, then:
 // 1. Walk the DOM tree and build the text tree.
@@ -36,53 +41,115 @@ use textwrap::Options;
 //    we could work on the text wrap, 'cause there are elements that can't be
 //    wrapped (for example, Links)
 
-fn go_children(input: &Handle, result: &mut String) {
-    for child in input.children.borrow().iter() {
-        walk(child.borrow(), result);
+/// Nodes in the text tree
+enum NodeType {
+    /// The root element; produces nothing, but has the base content.
+    Root,
+    /// A text block. Contains the text itself.
+    Text(String),
+    /// A link to somewhere. Contains the link.
+    Link(String),
+    /// Italics
+    Italic,
+    /// Code block
+    Code,
+    /// A line break
+    LineBreak,
+}
+
+struct Node {
+    r#type: NodeType,
+    children: Vec<Node>,
+}
+
+impl Node {
+    /// Build the root node
+    fn root() -> Self {
+        Self {
+            r#type: NodeType::Root,
+            children: Vec::new(),
+        }
+    }
+
+    /// Build a text node
+    fn text(text: &str) -> Self {
+        Self {
+            r#type: NodeType::Text(text.into()),
+            children: Vec::new(), // XXX text nodes will never have children
+        }
+    }
+
+    /// Build a link node
+    fn link(href: &str) -> Self {
+        Self {
+            r#type: NodeType::Link(href.into()),
+            children: Vec::new(),
+        }
+    }
+
+    /// Build a linebreak node
+    fn line_break() -> Self {
+        Self {
+            r#type: NodeType::LineBreak,
+            children: Vec::new(), // XXX linebreaks will never have children
+        }
+    }
+
+    /// Add a child node to this node
+    fn add_child(&mut self, node: Node) {
+        self.children.push(node);
     }
 }
 
-fn walk(input: &Handle, result: &mut String) {
+fn handle_text(node: &mut Node, contents: &RefCell<StrTendril>) -> bool {
+    let text = contents.borrow().to_string();
+    node.add_child(Node::text(&text));
+    true
+}
+
+fn handle_line_break(node: &mut Node) -> bool {
+    node.add_child(Node::line_break());
+    true
+}
+
+fn handle_span(node: &mut Node, attrs: &RefCell<Vec<Attribute>>) -> bool {
+    let attrs = attrs.borrow();
+    let classes = attrs
+        .iter()
+        .find(|attr| attr.name.local.to_string() == "class");
+    if let Some(class) = classes {
+        let classes = class.value.to_string();
+        // just keep going if not invisible
+        !classes.contains("invisible")
+
+        // if !classes.contains("invisible") {
+        //     true
+        //     if classes.contains("ellipsis") {
+        //         result.push_str("...");
+        //     }
+        // }
+    } else {
+        // with no classes, we consider the element visible and just keep
+        // processing the list.
+        true
+    }
+}
+
+fn walk(input: &Handle, parent: &mut Node) {
     println!(">>> {:?}", input.data);
-    match input.data {
-        NodeData::Text { ref contents } => {
-            let text = contents.borrow().to_string();
-            println!("Text: {:?}", text);
-            result.push_str(&text);
-        }
-        NodeData::Element { ref name, .. } => {
+    let process_children = match input.data {
+        NodeData::Text { ref contents } => handle_text(parent, contents),
+        NodeData::Element {
+            ref name,
+            ref attrs,
+            ..
+        } => {
             let tag = name.local.to_string();
             println!("Tag: {:?}", tag);
             match tag.as_ref() {
-                "html" | "head" | "body" => {
-                    println!("\tIgnored tag");
-                    go_children(input, result);
-                }
-                "p" => {
-                    println!("\tParagraph");
-                    result.push_str("\n\n");
-                    go_children(input, result);
-                }
-                "span" => {
-                    println!("\tSpan");
-                    if let NodeData::Element { ref attrs, .. } = input.data {
-                        let attrs = attrs.borrow();
-                        let classes = attrs
-                            .iter()
-                            .find(|attr| attr.name.local.to_string() == "class");
-                        if let Some(class) = classes {
-                            let classes = class.value.to_string();
-                            if !classes.contains("invisible") {
-                                go_children(input, result); // bollocks!
-                                if classes.contains("ellipsis") {
-                                    result.push_str("...");
-                                }
-                            }
-                        } else {
-                            go_children(input, result);
-                        }
-                    }
-                }
+                "html" | "head" | "body" => true, // just keep going
+                "p" => handle_line_break(parent),
+                "span" => handle_span(parent, attrs),
                 "a" => {
                     println!("\tAnchor");
                     if let NodeData::Element { ref attrs, .. } = input.data {
@@ -109,11 +176,15 @@ fn walk(input: &Handle, result: &mut String) {
                         }
                     }
                 }
-                _ => {}
+                _ => false,
             }
         }
-        _ => {
-            go_children(input, result);
+        _ => true, // if we can't deal with it, just keep going
+    };
+
+    if process_children {
+        for child in input.children.borrow().iter() {
+            walk(child.borrow(), parent);
         }
     }
 }
@@ -129,7 +200,7 @@ fn main() {
         .from_utf8()
         .read_from(&mut source.as_bytes())
         .unwrap();
-    let mut result = String::new();
+    let mut tree = Node::root();
     walk(&dom.document, &mut result);
     println!("---------------------------------");
     let options = Options::new(70)
