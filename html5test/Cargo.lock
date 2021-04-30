@@ -46,6 +46,7 @@ name = "html5test"
 version = "0.1.0"
 dependencies = [
  "html5ever",
+ "markup5ever",
  "markup5ever_rcdom",
  "textwrap",
 ]

@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 html5ever = "0.25"
 markup5ever_rcdom = "0.1"
+markup5ever = "0.10"
 textwrap = "0.13"
