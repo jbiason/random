@@ -18,28 +18,6 @@ macro_rules! keep_going {
     };
 }
 
-// fn handle_anchor(node: &mut Node, attrs: &RefCell<Vec<Attribute>>) -> HandleResult {
-//     let attrs = attrs.borrow();
-//     let rels = attrs
-//         .iter()
-//         .find(|attr| attr.name.local.to_string() == "rel");
-//     let hrefs = attrs
-//         .iter()
-//         .find(|attr| attr.name.local.to_string() == "href");
-//     match (rels, hrefs) {
-//         (Some(rel), Some(href)) => {
-//             if !rel.value.to_string().contains("tag") {
-//                 let new_node = Node::link(&href.value);
-//                 node.add_child(new_node);
-//                 HandleResult::NewNode(new_node)
-//             } else {
-//                 HandleResult::Keep
-//             }
-//         }
-//         _ => HandleResult::Stop,
-//     }
-// }
-
 fn walk(input: &Handle, result: &mut String) {
     match input.data {
         NodeData::Text { ref contents } => {
@@ -66,7 +44,10 @@ fn walk(input: &Handle, result: &mut String) {
                         .find(|attr| attr.name.local.to_string() == "class");
                     match classes_attr {
                         Some(classes) => {
-                            if !classes.value.contains("invisible") {
+                            if classes.value.contains("ellipsis") {
+                                keep_going!(input, result);
+                                result.push_str("...");
+                            } else if !classes.value.contains("invisible") {
                                 keep_going!(input, result);
                             }
                         }
@@ -81,7 +62,6 @@ fn walk(input: &Handle, result: &mut String) {
                     let hrefs = attrs
                         .iter()
                         .find(|attr| attr.name.local.to_string() == "href");
-                    println!("Rels: {:?}, Hrefs: {:?}", rels, hrefs);
                     match (rels, hrefs) {
                         (Some(rel), Some(href)) => {
                             if !rel.value.to_string().contains("tag") {
@@ -107,13 +87,14 @@ fn walk(input: &Handle, result: &mut String) {
 }
 
 fn build_nodes(source: &str) {
+    println!("Source: {}", source);
     let dom = parse_document(RcDom::default(), Default::default())
         .from_utf8()
         .read_from(&mut source.as_bytes())
         .unwrap();
     let mut result = String::new();
     walk(&dom.document, &mut result);
-    println!("Result: {:?}", result);
+    println!("Result: {}", result);
 }
 
 fn main() {
@@ -130,16 +111,8 @@ fn main() {
     );
     build_nodes(&example_3);
 
-    // let example_1 = String::from(
-    //     r#"<p>Today I finally moved with my contact and calendar management into the terminal with <a href="https://fosstodon.org/tags/vdirsyncer" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>vdirsyncer</span></a> <a href="https://fosstodon.org/tags/khal" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>khal</span></a> and <a href="https://fosstodon.org/tags/khard" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>khard</span></a>.</p><p>Thank you <span class="h-card"><a href="https://fosstodon.org/@hund" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>hund</span></a></span> for your great post: <a href="https://hund.tty1.se/2020/08/12/how-to-sync-and-manage-your-caldav-and-carddav-via-the-terminal.html" rel="nofollow noopener noreferrer" target="_blank"><span class="invisible">https://</span><span class="ellipsis">hund.tty1.se/2020/08/12/how-to</span><span class="invisible">-sync-and-manage-your-caldav-and-carddav-via-the-terminal.html</span></a></p><p><a href="https://fosstodon.org/tags/carddav" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>carddav</span></a> <a href="https://fosstodon.org/tags/caldav" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>caldav</span></a> <a href="https://fosstodon.org/tags/terminal" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>terminal</span></a></p>"#,
-    // );
-    // println!("Source: {}", &example_1);
-    // println!("---------------------------------");
-
-    // let dom = parse_document(RcDom::default(), Default::default())
-    //     .from_utf8()
-    //     .read_from(&mut example_1.as_bytes())
-    //     .unwrap();
-    // let mut tree = Node::root();
-    // walk(&dom.document, &mut tree);
+    let example_full_1 = String::from(
+        r#"<p>Today I finally moved with my contact and calendar management into the terminal with <a href="https://fosstodon.org/tags/vdirsyncer" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>vdirsyncer</span></a> <a href="https://fosstodon.org/tags/khal" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>khal</span></a> and <a href="https://fosstodon.org/tags/khard" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>khard</span></a>.</p><p>Thank you <span class="h-card"><a href="https://fosstodon.org/@hund" class="u-url mention" rel="nofollow noopener noreferrer" target="_blank">@<span>hund</span></a></span> for your great post: <a href="https://hund.tty1.se/2020/08/12/how-to-sync-and-manage-your-caldav-and-carddav-via-the-terminal.html" rel="nofollow noopener noreferrer" target="_blank"><span class="invisible">https://</span><span class="ellipsis">hund.tty1.se/2020/08/12/how-to</span><span class="invisible">-sync-and-manage-your-caldav-and-carddav-via-the-terminal.html</span></a></p><p><a href="https://fosstodon.org/tags/carddav" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>carddav</span></a> <a href="https://fosstodon.org/tags/caldav" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>caldav</span></a> <a href="https://fosstodon.org/tags/terminal" class="mention hashtag" rel="tag nofollow noopener noreferrer" target="_blank">#<span>terminal</span></a></p>"#,
+    );
+    build_nodes(&example_full_1);
 }
