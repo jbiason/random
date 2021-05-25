@@ -1,0 +1,9 @@
+[package]
+name = "sqlxtest"
+version = "0.1.0"
+authors = ["Julio Biason <julio.biason@pm.me>"]
+edition = "2018"
+
+[dependencies]
+sqlx = { version = "0.5", default-features = false, features = [ "sqlite", "chrono", "macros", "migrate", "runtime-tokio-rustls"] }
+tokio = { version = "1.6", features = [ "rt", "macros" ] }
