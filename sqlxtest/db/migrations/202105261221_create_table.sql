@@ -1,5 +1,5 @@
 -- Create table
 CREATE TABLE testing (
-       id TEXT PRIMARY KEY,
-       label TEXT
+       id INTEGER NOT NULL PRIMARY KEY,
+       label TEXT NOT NULL
 )
