@@ -11,3 +11,5 @@ env_logger = "0.9.0"
 log = "0.4.14"
 serde = { version = "1.0.130", features = ["derive"] }
 tokio = { version = "1.14.0", features = ["rt", "net", "macros", "sync", "time", "io-util"] }
+
+shared = { path = "../shared" }

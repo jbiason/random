@@ -1,6 +1,3 @@
-use chrono::offset::Utc;
-use chrono::DateTime;
-use serde::Serialize;
 use std::net::SocketAddr;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
@@ -9,25 +6,12 @@ use tokio::sync::broadcast;
 use tokio::time::sleep;
 use tokio::time::Duration;
 
-#[derive(Debug, Clone, Serialize)]
-struct Message {
-    received: DateTime<Utc>,
-    message: String,
-}
-
-impl Message {
-    pub fn new(message: &str) -> Self {
-        Self {
-            received: Utc::now(),
-            message: message.into(),
-        }
-    }
-}
+use shared::Message;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     env_logger::init();
-    let (tx, mut rx) = broadcast::channel::<Message>(30);
+    let (tx, rx) = broadcast::channel::<Message>(30);
 
     tokio::join!(consumer(rx), producer(tx.clone()), listener(tx));
 }
@@ -40,7 +24,8 @@ async fn producer(sink: broadcast::Sender<Message>) {
             Ok(_) => {} // log::debug!("Send: {}", message),
             Err(err) => log::error!("Error sending message: {:?}", err),
         }
-        sleep(Duration::from_millis(500)).await;
+        // Como o sink não tem await, o runtime não consegue escutar pelas portas
+        sleep(Duration::from_millis(1)).await;
     }
 }
 
