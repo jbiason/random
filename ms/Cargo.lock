@@ -232,7 +232,16 @@ dependencies = [
  "env_logger",
  "log",
  "serde",
+ "shared",
  "tokio",
+]
+
+[[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
 ]
 
 [[package]]
@@ -296,6 +305,14 @@ dependencies = [
 [[package]]
 name = "txtclient"
 version = "0.1.0"
+dependencies = [
+ "bincode",
+ "env_logger",
+ "log",
+ "serde",
+ "shared",
+ "tokio",
+]
 
 [[package]]
 name = "unicode-xid"
