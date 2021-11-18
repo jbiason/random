@@ -37,7 +37,7 @@ async fn producer(sink: broadcast::Sender<Message>) {
     let messages = ["Hello world", "Goodbye Earth", "See you later alligator"];
     for message in messages.iter().cycle() {
         match sink.send(Message::new(message)) {
-            Ok(_) => log::debug!("Send: {}", message),
+            Ok(_) => {} // log::debug!("Send: {}", message),
             Err(err) => log::error!("Error sending message: {:?}", err),
         }
         sleep(Duration::from_millis(500)).await;
@@ -74,7 +74,7 @@ async fn worker(mut source: broadcast::Receiver<Message>, mut stream: TcpStream,
 /// Essa função existe porque o sender do broadcast precisa de pelo menos um listener.
 async fn consumer(mut receiver: broadcast::Receiver<Message>) {
     loop {
-        let message = receiver.recv().await.expect("Invalid message");
-        log::debug!("Message: {:?}", message);
+        let _message = receiver.recv().await.expect("Invalid message");
+        // log::debug!("Message: {:?}", message);
     }
 }
