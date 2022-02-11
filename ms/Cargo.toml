@@ -1,0 +1,9 @@
+[workspace]
+members = [
+	"shared",
+	"server",
+	"txtclient",
+]
+
+[profile.release]
+lto = true

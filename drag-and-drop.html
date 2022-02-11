@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	</head>
+
+	<body>
+		<table>
+			<thread>
+				<tr>
+					<th>Cell</th>
+					<th>Cell</th>
+					<th>Cell</th>
+					<th>Cell</th>
+				</tr>
+			</thead>
+
+			<tbody>
+				<tr draggable="true" class="dropzone">
+					<td draggable="false">1</td>
+					<td draggable="false">1</td>
+					<td draggable="false">1</td>
+					<td draggable="false">1</td>
+				</tr>
+				<tr draggable="true" class="dropzone">
+					<td draggable="false">2</td>
+					<td draggable="false">2</td>
+					<td draggable="false">2</td>
+					<td draggable="false">2</td>
+				</tr>
+				<tr draggable="true" class="dropzone">
+					<td draggable="false">3</td>
+					<td draggable="false">3</td>
+					<td draggable="false">3</td>
+					<td draggable="false">3</td>
+				</tr>
+			</tbody>
+		</table>
+	</body>
+
+	<script>
+		(function() {
+			let dragged = null;
+
+			document.addEventListener("dragstart", function(event) {
+				dragged = event.target;
+				event.target.style.opacity = .5;
+			});
+
+			document.addEventListener("dragenter", function(event) {
+				const parent = event.target.parentNode;
+				if (parent.className == "dropzone") {
+					event.target.parentNode.style.background = "#7f7f7f";
+				}
+			});
+
+			document.addEventListener("dragleave", function(event) {
+				const parent = event.target.parentNode;
+				if (parent.className == "dropzone") {
+					event.target.parentNode.style.background = "#ffffff";
+				}
+			});
+
+			document.addEventListener("dragover", function(event) {
+				// Necessário para que o "drop" funcione.
+				event.preventDefault();
+			});
+
+			document.addEventListener("drop", function(event) {
+				dragged.style.opacity = 1;
+				event.preventDefault();
+				const row = event.target.parentNode;
+				const table = row.parentNode;
+				if (row.className == "dropzone") {
+					row.style.background = "#ffffff";
+					const movement = dragged.compareDocumentPosition(row);
+					console.log('Movement: ', movement);
+					if (movement === Node.DOCUMENT_POSITION_PRECEDING) {
+						table.insertBefore(dragged, row);
+					} else {
+						table.insertBefore(dragged, row.nextSibling);
+					}
+				}
+			});
+		})();
+	</script>
+</html>

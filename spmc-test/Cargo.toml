@@ -1,0 +1,7 @@
+[package]
+name = "spmctest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spmc = "0.3"
