@@ -60,6 +60,29 @@ async fn connect() -> Result<Pool<Sqlite>, sqlx::Error> {
     Ok(pool)
 }
 
+#[derive(Debug, sqlx::Type)]
+pub enum BazTypes {
+    #[sqlx(rename = "foo")]
+    One,
+
+    #[sqlx(rename = "bar")]
+    Two,
+
+    #[sqlx(rename = "baz")]
+    Three,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct Foo {
+    id: i32,
+
+    #[sqlx(rename = "bar")]
+    indicator: String,
+
+    #[sqlx(rename = "baz")]
+    foo_type: BazTypes,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
     let pool = connect().await?;
@@ -74,24 +97,58 @@ async fn main() -> Result<(), sqlx::Error> {
 
     println!("Command: \"{}\"", command);
 
-    if command == "add" {
-        println!("Should add \"{}\"", value);
-        let record = Label {
-            id: None,
-            description: value.into(),
-        };
-        repo.save(&record).await?;
-    } else if command == "remove" {
-        println!("Should remove \"{}\"", value);
-        match repo.find_by_description(&value).await {
-            Ok(record) => {
-                repo.delete(&record).await?;
-                println!("Removed");
-            }
-            Err(err) => {
-                println!("Label does not exist: {:?}", err);
+    match command.as_str() {
+        "add" => {
+            println!("Should add \"{}\"", value);
+            let record = Label {
+                id: None,
+                description: value.into(),
+            };
+            repo.save(&record).await?;
+        }
+        "remove" => {
+            println!("Should remove \"{}\"", value);
+            match repo.find_by_description(&value).await {
+                Ok(record) => {
+                    repo.delete(&record).await?;
+                    println!("Removed");
+                }
+                Err(err) => {
+                    println!("Label does not exist: {:?}", err);
+                }
             }
         }
+        "one" => {
+            let pool = connect().await.unwrap();
+            let record = Foo {
+                id: 1,
+                indicator: value.into(),
+                foo_type: BazTypes::One,
+            };
+            println!("Adding Foo({:?})", record);
+            sqlx::query("INSERT INTO foo (bar, baz) values ($1, $2);")
+                .bind(&record.indicator)
+                .bind(&record.foo_type)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        "two" => {
+            let pool = connect().await.unwrap();
+            let record = Foo {
+                id: 1,
+                indicator: value.into(),
+                foo_type: BazTypes::Two,
+            };
+            println!("Adding Foo({:?})", record);
+            sqlx::query("INSERT INTO foo (bar, baz) values ($1, $2);")
+                .bind(&record.indicator)
+                .bind(&record.foo_type)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+        _ => println!("Unknonw command"),
     }
     Ok(())
 }
