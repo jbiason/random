@@ -83,11 +83,14 @@ async fn main() -> Result<(), sqlx::Error> {
         repo.save(&record).await?;
     } else if command == "remove" {
         println!("Should remove \"{}\"", value);
-        if let Ok(record) = repo.find_by_description(&value).await {
-            repo.delete(&record).await?;
-            println!("Removed");
-        } else {
-            println!("Label does not exist");
+        match repo.find_by_description(&value).await {
+            Ok(record) => {
+                repo.delete(&record).await?;
+                println!("Removed");
+            }
+            Err(err) => {
+                println!("Label does not exist: {:?}", err);
+            }
         }
     }
     Ok(())
