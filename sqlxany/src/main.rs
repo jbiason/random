@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use sqlx::{Any, Pool};
 
 mod entity;
@@ -5,9 +7,10 @@ mod entity;
 #[tokio::main]
 async fn main() {
     let record = entity::Entity::new(1, "Something");
-    let pool =
+    let pool = Arc::new(
         Pool::<Any>::connect(&std::env::var("DATABASE_URL").expect("I need DATABASE_URL set!"))
             .await
-            .expect("Failed to connect to the database");
+            .expect("Failed to connect to the database"),
+    );
     record.save(&pool).await.unwrap();
 }

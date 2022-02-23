@@ -11,7 +11,10 @@ VALUES
 
 #[derive(sqlx::FromRow)]
 pub struct Entity {
+    #[sqlx(rename = "chave")]
     id: i64,
+
+    #[sqlx(rename = "descricao")]
     description: String,
 }
 
