@@ -1,6 +1,8 @@
 use std::io;
 use std::path::Path;
+use std::str::FromStr;
 
+use bigdecimal::BigDecimal;
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncWriteExt;
 use tokio::io::Interest;
@@ -10,7 +12,9 @@ use tokio::net::UnixStream;
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 enum Message {
     First(i64, String),
-    Second(i64, String),
+    Second(i64, Option<String>),
+    Third(i64),
+    Fourth(BigDecimal),
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -84,10 +88,11 @@ async fn send_to_consumer(stream: &mut UnixStream) {
     let mut should_yield = false;
     let mut seq = 0;
     loop {
-        let message = if should_yield {
-            Message::First(seq, format!("{} first", seq))
-        } else {
-            Message::Second(seq, format!("{} second", seq))
+        let message = match seq % 5 {
+            0 => Message::First(seq, format!("{} first", seq)),
+            1 => Message::Second(seq, Some(format!("{} second", seq))),
+            2 => Message::Third(seq),
+            _ => Message::Fourth(BigDecimal::from_str(&format!("{}", seq)).unwrap()),
         };
         seq += 1;
 
