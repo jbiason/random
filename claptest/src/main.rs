@@ -12,5 +12,8 @@ struct Params {
 }
 
 fn main() {
-    let _args = Params::parse();
+    let args = Params::parse();
+
+    println!("Obrigatório: {:?}", args.obr);
+    println!("   Opcional: {:?}", args.opt);
 }
