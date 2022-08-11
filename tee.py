@@ -31,6 +31,13 @@ def main():
     with Tee('tee.txt', 'w') as target:
         subprocess.run('ls', stdout=target, check=False)
 
+    with open('tee2.txt', 'w') as output:
+        with subprocess.Popen('ls', stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+            for line in proc.stdout:
+                print(f'--> {line.decode("utf-8")}', file=output)
+    result = subprocess.CompletedProcess(proc.args, proc.returncode, proc.stdout, proc.stderr)
+    print(result)
+
 
 if __name__ == '__main__':
     main()
