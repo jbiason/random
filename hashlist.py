@@ -13,6 +13,9 @@ class E:
     def __eq__(self, other):
         return self.internal_list == other.internal_list
 
+    def __bool__(self):
+        return len(self.internal_list) > 0
+
 
 content = set()
 w1 = E([1, 2])
@@ -21,3 +24,9 @@ content.add(w1)
 content.add(w2)
 
 print(content)
+
+w3 = E([])
+if w3:
+    print('It is true')
+else:
+    print('It is false')
