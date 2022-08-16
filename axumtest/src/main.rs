@@ -1,9 +1,11 @@
-mod header;
+mod headers;
 
 use axum::routing::get;
 use axum::routing::Router;
 use axum::TypedHeader;
-use header::ciusr::CiUsr;
+use headers::cipwd::CiPwd;
+use headers::cirole::CiRole;
+use headers::ciusr::CiUsr;
 
 #[tokio::main]
 async fn main() {
@@ -14,6 +16,10 @@ async fn main() {
         .unwrap();
 }
 
-async fn index(TypedHeader(usr): TypedHeader<CiUsr>) -> String {
+async fn index(
+    TypedHeader(usr): TypedHeader<CiUsr>,
+    TypedHeader(pwd): TypedHeader<CiPwd>,
+    TypedHeader(role): TypedHeader<CiRole>,
+) -> String {
     format!("Hellow {}", usr)
 }
