@@ -1,12 +1,14 @@
+mod auth;
 mod headers;
 
 use std::sync::Arc;
 
+use axum::middleware;
+use axum::routing::get;
 use headers::cipwd::CiPwd;
 use headers::cirole::CiRole;
 use headers::ciusr::CiUsr;
 
-use axum::routing::get;
 use axum::routing::Router;
 use axum::TypedHeader;
 use clap::Parser;
@@ -14,7 +16,6 @@ use dotenv::dotenv;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
 use mongodb::Database;
-use tracing_subscriber;
 
 #[derive(Parser)]
 struct Params {
@@ -50,8 +51,11 @@ async fn main() {
         "/collections",
         get({
             let shared_state = Arc::clone(&state);
-            move |usr, pwd, role| get_collections(usr, pwd, role, Arc::clone(&shared_state))
-        }),
+            move || get_collections(Arc::clone(&shared_state))
+        })
+        .route_layer(middleware::from_fn(move |req, next| {
+            auth::ci_auth(req, next, "A", "A", "A")
+        })),
     );
 
     tracing::info!(args.addr, "Server listening in");
@@ -69,11 +73,6 @@ async fn index(
     format!("Hellow {}", usr)
 }
 
-async fn get_collections(
-    TypedHeader(usr): TypedHeader<CiUsr>,
-    TypedHeader(pwd): TypedHeader<CiPwd>,
-    TypedHeader(role): TypedHeader<CiRole>,
-    state: Arc<State>,
-) -> String {
+async fn get_collections(state: Arc<State>) -> String {
     format!("Collections")
 }
