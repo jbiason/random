@@ -13,9 +13,9 @@ static CIROLE: HeaderName = HeaderName::from_static("x-cirole");
 pub async fn ci_auth<B>(
     req: Request<B>,
     next: Next<B>,
-    expected_usr: &str,
-    expected_pwd: &str,
-    expected_role: &str,
+    expected_usr: String,
+    expected_pwd: String,
+    expected_role: String,
 ) -> Result<Response, StatusCode> {
     let usr = req
         .headers()

@@ -113,6 +113,8 @@ dependencies = [
  "clap",
  "dotenv",
  "mongodb",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
