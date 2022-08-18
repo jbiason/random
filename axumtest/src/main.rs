@@ -1,11 +1,9 @@
 mod auth;
+mod collections;
 
 use std::sync::Arc;
 
-use axum::middleware;
 use axum::routing::get;
-use axum::Json;
-
 use axum::routing::Router;
 use clap::Parser;
 use dotenv::dotenv;
@@ -30,7 +28,8 @@ struct Params {
     #[clap(long, env = "CIROLE")]
     ci_role: String,
 }
-struct State {
+
+pub struct State {
     db: Database,
 }
 
@@ -45,27 +44,17 @@ async fn main() {
     let mongo_options = ClientOptions::parse(&args.mongo_addr).await.unwrap();
     let client = Client::with_options(mongo_options).unwrap();
     let db = client.database("helyxTestDatabase");
-    let collections = db.list_collection_names(None).await.unwrap();
-    tracing::debug!("Collections = {:?}", &collections);
 
-    let state = Arc::new(State {
-        db,
-    });
+    let state = Arc::new(State { db });
 
-    let app = Router::new().route("/", get(index)).route(
-        "/collections",
-        get({
-            let shared_state = Arc::clone(&state);
-            move || get_collections(Arc::clone(&shared_state))
-        })
-        .route_layer(middleware::from_fn(move |req, next| {
-            let ci_usr = args.ci_usr.clone();
-            let ci_pwd = args.ci_pwd.clone();
-            let ci_role = args.ci_role.clone();
-
-            auth::ci_auth(req, next, ci_usr, ci_pwd, ci_role)
-        })),
-    );
+    let app = Router::new()
+        .route("/", get(index))
+        .merge(collections::router(
+            state.clone(),
+            args.ci_usr.clone(),
+            args.ci_pwd.clone(),
+            args.ci_role.clone(),
+        ));
 
     tracing::info!(args.addr, "Server listening in");
     axum::Server::bind(&args.addr.parse().unwrap())
@@ -76,9 +65,4 @@ async fn main() {
 
 async fn index() -> String {
     format!("Hellow")
-}
-
-async fn get_collections(state: Arc<State>) -> Json<Vec<String>> {
-    let collections = state.db.list_collection_names(None).await.unwrap();
-    Json(collections)
 }
