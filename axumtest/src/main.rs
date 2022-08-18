@@ -1,4 +1,5 @@
 mod auth;
+mod cases;
 mod collections;
 
 use std::sync::Arc;
@@ -50,6 +51,12 @@ async fn main() {
     let app = Router::new()
         .route("/", get(index))
         .merge(collections::router(
+            state.clone(),
+            args.ci_usr.clone(),
+            args.ci_pwd.clone(),
+            args.ci_role.clone(),
+        ))
+        .merge(cases::router(
             state.clone(),
             args.ci_usr.clone(),
             args.ci_pwd.clone(),
