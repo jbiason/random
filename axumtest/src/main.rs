@@ -1,6 +1,7 @@
 mod auth;
 mod cases;
 mod collections;
+mod entities;
 
 use std::sync::Arc;
 
@@ -10,29 +11,9 @@ use clap::Parser;
 use dotenv::dotenv;
 use mongodb::options::ClientOptions;
 use mongodb::Client;
-use mongodb::Database;
 
-#[derive(Parser)]
-struct Params {
-    #[clap(env = "SRV_ADDR", default_value = "0.0.0.0:3000")]
-    addr: String,
-
-    #[clap(short, long, env = "MONGO_URI")]
-    mongo_addr: String,
-
-    #[clap(long, env = "CIUSR")]
-    ci_usr: String,
-
-    #[clap(long, env = "CIPWD")]
-    ci_pwd: String,
-
-    #[clap(long, env = "CIROLE")]
-    ci_role: String,
-}
-
-pub struct State {
-    db: Database,
-}
+use crate::entities::Params;
+use crate::entities::State;
 
 #[tokio::main]
 async fn main() {

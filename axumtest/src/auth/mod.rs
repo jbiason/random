@@ -4,7 +4,11 @@ use axum::headers::HeaderName;
 use axum::http::Request;
 use axum::http::StatusCode;
 use axum::middleware::Next;
+use axum::response::IntoResponse;
 use axum::response::Response;
+use axum::Json;
+
+use crate::entities::ErrorResponse;
 
 static CIUSR: HeaderName = HeaderName::from_static("x-ciusr");
 static CIPWD: HeaderName = HeaderName::from_static("x-cipwd");
@@ -16,7 +20,7 @@ pub async fn ci_auth<B>(
     expected_usr: String,
     expected_pwd: String,
     expected_role: String,
-) -> Result<Response, StatusCode> {
+) -> Result<Response, (StatusCode, impl IntoResponse)> {
     let usr = req
         .headers()
         .get(&CIUSR)
@@ -38,6 +42,9 @@ pub async fn ci_auth<B>(
         {
             Ok(next.run(req).await)
         }
-        (_, _, _) => Err(StatusCode::UNAUTHORIZED),
+        (_, _, _) => Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ErrorResponse::new("Invalid credentials")),
+        )),
     }
 }
