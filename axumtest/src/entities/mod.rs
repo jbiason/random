@@ -1,5 +1,7 @@
 //! Entities used in the system.
 
+use std::collections::HashMap;
+
 use clap::Parser;
 use mongodb::Database;
 
@@ -45,4 +47,35 @@ impl ErrorResponse {
             reason: reason.into(),
         }
     }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Comparison {
+    absolute_tolerance: f64,
+    relative_tolerance: f64,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Compare {
+    file_to_test: String,
+    entries_to_compare: HashMap<String, Comparison>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Case {
+    #[serde(default)]
+    files: Vec<String>,
+    timeout: Option<u16>,
+    #[serde(default)]
+    run: Vec<String>,
+    #[serde(default)]
+    parallel: Vec<String>,
+    procs: Option<u16>,
+
+    #[serde(default)]
+    tags: Vec<String>,
+    version: Option<u16>,
+
+    #[serde(default)]
+    compare: HashMap<String, Compare>,
 }
