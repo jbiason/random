@@ -11,6 +11,7 @@ use futures::StreamExt;
 use mongodb::bson::doc;
 use mongodb::bson::Document;
 use mongodb::options::FindOptions;
+use tokio::task::JoinHandle;
 
 use crate::auth;
 use crate::State;
@@ -34,21 +35,29 @@ pub fn router(state: Arc<State>, ci_usr: String, ci_pwd: String, ci_role: String
 }
 
 async fn all_cases_on_collection(Path(collection): Path<String>, state: Arc<State>) -> String {
-    let collection = state.db.collection::<Document>(&collection);
+    let collection = Arc::new(state.db.collection::<Document>(&collection));
     let options = FindOptions::builder()
         .projection(doc! { "caseID": 1 })
         .build();
-    let cursor = collection.find(None, options).await.unwrap();
+    let mut cursor = collection.find(None, options).await.unwrap();
+    let mut calls = Vec::new();
 
-    let result = cursor
-        .map(|r| r.unwrap().get_str("caseID").unwrap().to_lowercase())
-        .collect::<Vec<String>>()
-        .await;
-    // while let Some(record) = cursor.try_next().await.unwrap() {
-    //     tracing::debug!("{:?}", record.get_str("caseID").unwrap());
-    // }
+    while let Some(record) = cursor.try_next().await.unwrap() {
+        let name = record.get_str("caseID").unwrap();
+        let filter = doc! { "caseID": name };
+        let task_collection = Arc::clone(&collection);
+        let task = tokio::task::spawn(async move {
+            let record = task_collection.find_one(filter, None).await.unwrap();
+            record
+        });
 
-    tracing::debug!("Cases: {:?}", result);
+        calls.push(task);
+    }
+
+    for handle in calls {
+        let record = handle.await;
+        tracing::debug!("Case: {:?}", record);
+    }
 
     format!("Cases!")
 }
