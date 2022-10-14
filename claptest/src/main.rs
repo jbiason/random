@@ -1,6 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser)]
+#[command(author, version, about)]
 struct Params {
     /// String opcional
     #[clap(long)]
