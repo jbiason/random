@@ -1,17 +1,35 @@
-fn main() {
-    let all_evens = [2u8, 4, 6, 8];
-    let result: Result<Vec<_>, _> = all_evens
-        .iter()
-        .map(|value| if value % 2 == 0 { Some(value) } else { None })
-        .map(|opt| opt.ok_or(format!("Not good")))
-        .collect();
-    println!("All Evens: {:?}", result);
+use std::env;
+use std::path::PathBuf;
 
-    let not_evens = [2, 2, 2, 2, 2, 1];
-    let result: Result<Vec<_>, _> = not_evens
+fn split(line: &str) -> Option<(String, Vec<String>)> {
+    let mut split = line.split(' ');
+    let root = split.next()?;
+    let arguments = split.map(|x| x.to_string()).collect();
+    Some((root.to_string(), arguments))
+}
+
+fn as_command(command: &str) -> Option<PathBuf> {
+    env::split_paths(&env::var_os("PATH")?).find_map(|dir| {
+        let full_path = dir.join(command);
+        if full_path.exists() {
+            Some(full_path)
+        } else {
+            None
+        }
+    })
+}
+
+fn main() {
+    let commands = ["ls -la", "ls", "exa", "not"];
+    let result = commands
         .iter()
-        .map(|value| if value % 2 == 0 { Some(value) } else { None })
-        .map(|opt| opt.ok_or(format!("Not good")))
-        .collect();
-    println!("Not Evens: {:?}", result);
+        .map(|line| split(&line))
+        .map(|opt| {
+            let (command, args) = opt?;
+            let full_command = as_command(&command)?;
+            Some((full_command, args))
+        })
+        .map(|opt| opt.ok_or("Not good enough"))
+        .collect::<Result<Vec<_>, _>>();
+    println!("Result: {:?}", result)
 }
