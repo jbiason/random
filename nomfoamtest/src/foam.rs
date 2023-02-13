@@ -8,33 +8,43 @@ use nom::bytes::complete::take_until;
 use nom::IResult;
 
 #[derive(Debug, Clone, PartialEq)]
-struct Comment {
-    comment: String,
+struct Comment<'a> {
+    content: &'a str,
 }
 
-impl FromStr for Comment {
-    type Err = ();
+// impl FromStr for Comment {
+//     type Err = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self {
-            comment: s.trim().to_string(),
-        })
-    }
-}
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         Ok(Self {
+//             comment: s.trim().to_string(),
+//         })
+//     }
+// }
 
 fn multiline_comment(input: &str) -> IResult<&str, Comment> {
     let (input, _) = tag("/*")(input)?;
     let (input, content) = take_until("*/")(input)?;
     let (input, _) = tag("*/")(input)?;
 
-    Ok((input, Comment::from_str(content).unwrap()))
+    Ok((
+        input,
+        Comment {
+            content: content.trim(),
+        },
+    ))
 }
 
 fn singleline_comment(input: &str) -> IResult<&str, Comment> {
     let (input, _) = tag("//")(input)?;
     let (input, content) = is_not("\n\r")(input)?;
 
-    Ok((input, Comment::from_str(content).unwrap()))
+    Ok((
+        input,
+        Comment {
+            content: content.trim(),
+        },
+    ))
 }
 
 #[cfg(test)]
@@ -50,7 +60,7 @@ mod tests {
             Ok((
                 "",
                 Comment {
-                    comment: "this is comment".to_string()
+                    content: "this is comment"
                 }
             ))
         )
@@ -65,7 +75,7 @@ mod tests {
             Ok((
                 "",
                 Comment {
-                    comment: "this is comment".to_string()
+                    content: "this is comment"
                 }
             ))
         )
