@@ -2,14 +2,17 @@ whitespace = _{ " " | "\t" | "\r" | "\n" }
 multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
 identifier = { ASCII_ALPHA+ ~ (ASCII_ALPHA | ASCII_DIGIT | "_")* }
-rvalue = { (!";" ~ ANY)+ }
+rvalue = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "_" | ".")+ }
 attribution = { identifier ~ whitespace+ ~ rvalue ~ ";" }
 dictionary = { identifier ~ whitespace+ ~ "{" ~ (dictionary | attribution | whitespace)+ ~ "}" }
+list_size = _{ ASCII_DIGIT+ ~ whitespace+ }
+list = { identifier ~ whitespace+ ~ list_size? ~ "(" ~ (rvalue | whitespace)+ ~ ");" }
 
 file = { SOI ~ (
 	whitespace 
 	| multi_comment 
 	| single_comment 
 	| dictionary
+	| list
 	| attribution)* 
 	~ EOI }

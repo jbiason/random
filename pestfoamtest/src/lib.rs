@@ -31,8 +31,7 @@ mod test {
 
     #[test]
     fn chained_comments() {
-        let text = "/* this is one comment */
-// And this is another";
+        let text = "/* this is one comment */\n// And this is another";
         let parse = Foam::parse(Rule::file, text);
         assert!(parse.is_ok(), "{:?}", parse);
     }
@@ -69,14 +68,7 @@ mod test {
 
     #[test]
     fn dictionary() {
-        let text = "FoamFile
-{
-    version 2.0;
-    format ascii;
-    class dictionary;
-    location system;
-    object caseSetupDict;
-}";
+        let text = "FoamFile\n{\nversion 2.0;\nformat ascii;\nclass dictionary;\nlocation system;\nobject caseSetupDict;\n}";
         let parse = Foam::parse(Rule::dictionary, text);
         assert!(parse.is_ok(), "{:#?}", parse);
     }
@@ -85,6 +77,20 @@ mod test {
     fn dict_in_dict() {
         let text = "dict1 { dict2 { class bad; } }";
         let parse = Foam::parse(Rule::dictionary, text);
-        assert!(parse.is_err(), "{:#?}", parse);
+        assert!(parse.is_ok(), "{:#?}", parse);
+    }
+
+    #[test]
+    fn list() {
+        let text = "list_name ( 1 2 3 );";
+        let parse = Foam::parse(Rule::list, text);
+        assert!(parse.is_ok(), "{:#?}", parse);
+    }
+
+    #[test]
+    fn sized_list() {
+        let text = "list_name 3 ( 1 2 3 );";
+        let parse = Foam::parse(Rule::list, text);
+        assert!(parse.is_ok(), "{:#?}", parse);
     }
 }
