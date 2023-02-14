@@ -1,4 +1,15 @@
+whitespace = _{ " " | "\t" | "\r" | "\n" }
 multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
+identifier = { ASCII_ALPHA+ ~ (ASCII_ALPHA | ASCII_DIGIT | "_")* }
+rvalue = { (!";" ~ ANY)+ }
+attribution = { identifier ~ whitespace+ ~ rvalue ~ ";" }
+dictionary = { identifier ~ whitespace+ ~ "{" ~ (dictionary | attribution | whitespace)+ ~ "}" }
 
-field = { (ASCII_DIGIT | "." | "-")+ }
+file = { SOI ~ (
+	whitespace 
+	| multi_comment 
+	| single_comment 
+	| dictionary
+	| attribution)* 
+	~ EOI }
