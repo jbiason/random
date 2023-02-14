@@ -1,0 +1,4 @@
+multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
+
+field = { (ASCII_DIGIT | "." | "-")+ }
