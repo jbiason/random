@@ -124,4 +124,11 @@ mod file {
         let parse = FoamParser::parse(Rule::file, text);
         assert!(parse.is_ok(), "{:?}", parse);
     }
+
+    #[test]
+    fn control_dict() {
+        let text = include_bytes!("../resources/controlDict");
+        let parse = FoamParser::parse(Rule::file, &std::str::from_utf8(text).unwrap());
+        assert!(parse.is_ok(), "{:?}", parse);
+    }
 }
