@@ -125,9 +125,18 @@ mod file {
         assert!(parse.is_ok(), "{:?}", parse);
     }
 
+    // Note: the following files were retrieved from OpenFoam examples:
+    // https://develop.openfoam.com/Development/openfoam/-/tree/develop/tutorials/incompressible/pimpleFoam/RAS/rotatingFanInRoom/system
     #[test]
     fn control_dict() {
         let text = include_bytes!("../resources/controlDict");
+        let parse = FoamParser::parse(Rule::file, &std::str::from_utf8(text).unwrap());
+        assert!(parse.is_ok(), "{:?}", parse);
+    }
+
+    #[test]
+    fn block_mesh_dict() {
+        let text = include_bytes!("../resources/blockMeshDict");
         let parse = FoamParser::parse(Rule::file, &std::str::from_utf8(text).unwrap());
         assert!(parse.is_ok(), "{:?}", parse);
     }
