@@ -3,10 +3,11 @@ multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
 identifier = { ASCII_ALPHA+ ~ (ASCII_ALPHA | ASCII_DIGIT | "_")* }
 rvalue = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "_" | ".")+ }
-attribution = { identifier ~ whitespace+ ~ rvalue ~ ";" }
-dictionary = { identifier ~ whitespace+ ~ "{" ~ (dictionary | attribution | whitespace)+ ~ "}" }
+middle = { (whitespace | multi_comment)+ }
+attribution = { identifier ~ middle ~ rvalue ~ ";" }
+dictionary = { identifier ~ middle ~ "{" ~ (dictionary | attribution | whitespace | multi_comment | single_comment)+ ~ "}" }
 list_size = _{ ASCII_DIGIT+ ~ whitespace+ }
-list = { identifier ~ whitespace+ ~ list_size? ~ "(" ~ (rvalue | whitespace)+ ~ ");" }
+list = { identifier ~ middle ~ list_size? ~ "(" ~ (rvalue | whitespace | multi_comment | single_comment)+ ~ ");" }
 
 file = { SOI ~ (
 	whitespace 
