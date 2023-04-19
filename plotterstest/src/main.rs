@@ -4,6 +4,7 @@ use plotters::prelude::IntoDrawingArea;
 use plotters::prelude::IntoSegmentedCoord;
 use plotters::prelude::Rectangle;
 use plotters::prelude::SegmentValue;
+use plotters::style::full_palette::PURPLE;
 use plotters::style::text_anchor::HPos;
 use plotters::style::text_anchor::Pos;
 use plotters::style::text_anchor::VPos;
@@ -11,7 +12,6 @@ use plotters::style::Color;
 use plotters::style::FontTransform;
 use plotters::style::IntoFont;
 use plotters::style::TextStyle;
-use plotters::style::RED;
 use plotters::style::WHITE;
 
 fn main() {
@@ -168,24 +168,31 @@ fn main() {
         .x_label_area_size(150)
         .y_label_area_size(50)
         .margin(5)
-        .caption("Cases", ("sans-serif", 40.0))
-        .build_cartesian_2d((0..values.len()).into_segmented(), 0.0f64..300.0f64)
+        .caption("Cases", ("sans-serif bold", 40.0))
+        .build_cartesian_2d((0..values.len()).into_segmented(), 0.0f64..350.0f64)
         .unwrap();
 
     let pos = Pos::new(HPos::Left, VPos::Bottom);
-    let x_label_style = TextStyle::from(("sans-serif", 10).into_font())
+    let x_label_style = TextStyle::from(("sans-serif", 9).into_font())
         .pos(pos)
         .transform(FontTransform::Rotate90);
     chart
         .configure_mesh()
-        .x_labels(values.len() - 1)
+        .x_labels(values.len())
         .x_label_formatter(&|pos| {
-            let record: (&str, f64) = match pos {
-                SegmentValue::CenterOf(t) => values[*t],
-                SegmentValue::Exact(t) => values[*t],
-                SegmentValue::Last => *values.last().unwrap(),
+            let pos: usize = match pos {
+                SegmentValue::CenterOf(t) => *t,
+                SegmentValue::Exact(t) => *t,
+                SegmentValue::Last => values.len() - 1,
             };
-            record.0.to_string()
+            let label = if pos > values.len() - 1 {
+                String::from("")
+            } else {
+                let record = values[pos];
+                record.0.to_string()
+            };
+            println!("Label for {pos:?} is {label}");
+            label
         })
         .x_label_style(x_label_style)
         .draw()
@@ -194,12 +201,15 @@ fn main() {
     chart
         .draw_series(
             (0usize..)
-                .zip(values.iter().map(|(_name, value)| *value))
+                .zip(values.iter().map(|(_name, value)| {
+                    // println!("{_name} is {value}");
+                    *value
+                }))
                 .map(|(pos, value)| {
                     let x0 = SegmentValue::Exact(pos);
                     let x1 = SegmentValue::Exact(pos + 1);
-                    let mut rect = Rectangle::new([(x0, 0.0), (x1, value)], RED.filled());
-                    rect.set_margin(0, 0, 2, 2);
+                    let mut rect = Rectangle::new([(x0, 0.0), (x1, value)], PURPLE.filled());
+                    rect.set_margin(0, 0, 1, 1);
                     rect
                 }),
         )
