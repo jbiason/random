@@ -165,14 +165,14 @@ fn main() {
     root.fill(&WHITE).unwrap();
 
     let mut chart = ChartBuilder::on(&root)
-        .x_label_area_size(100)
+        .x_label_area_size(150)
         .y_label_area_size(50)
         .margin(5)
         .caption("Cases", ("sans-serif", 40.0))
         .build_cartesian_2d((0..values.len()).into_segmented(), 0.0f64..300.0f64)
         .unwrap();
 
-    let pos = Pos::new(HPos::Right, VPos::Top);
+    let pos = Pos::new(HPos::Left, VPos::Bottom);
     let x_label_style = TextStyle::from(("sans-serif", 10).into_font())
         .pos(pos)
         .transform(FontTransform::Rotate90);
