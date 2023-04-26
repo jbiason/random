@@ -2,8 +2,8 @@ use plotters::prelude::BitMapBackend;
 use plotters::prelude::ChartBuilder;
 use plotters::prelude::IntoDrawingArea;
 use plotters::prelude::IntoSegmentedCoord;
-use plotters::prelude::Rectangle;
 use plotters::prelude::SegmentValue;
+use plotters::series::Histogram;
 use plotters::style::full_palette::PURPLE;
 use plotters::style::text_anchor::HPos;
 use plotters::style::text_anchor::Pos;
@@ -164,18 +164,22 @@ fn main() {
     let root = BitMapBackend::new("cases.png", (1920, 720)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
+    let max = values
+        .iter()
+        .map(|(_name, value)| value)
+        .fold(0.0f64, |acc, x| if acc > *x { acc } else { *x });
     let mut chart = ChartBuilder::on(&root)
         .x_label_area_size(150)
         .y_label_area_size(50)
         .margin(5)
-        .caption("Cases", ("sans-serif bold", 40.0))
-        .build_cartesian_2d((0..values.len()).into_segmented(), 0.0f64..350.0f64)
+        // .caption("Cases", ("sans-serif bold", 40.0))
+        .build_cartesian_2d((0..values.len()).into_segmented(), 0.0f64..max)
         .unwrap();
 
     let pos = Pos::new(HPos::Left, VPos::Bottom);
     let x_label_style = TextStyle::from(("Ubuntu Medium", 10).into_font())
         .pos(pos)
-        .transform(FontTransform::Rotate90);
+        .transform(FontTransform::Rotate270);
     chart
         .configure_mesh()
         .x_labels(values.len())
@@ -195,23 +199,17 @@ fn main() {
             label
         })
         .x_label_style(x_label_style)
+        .disable_x_mesh()
         .draw()
         .unwrap();
 
+    let just_values = values.map(|(_name, value)| value);
     chart
         .draw_series(
-            (0usize..)
-                .zip(values.iter().map(|(_name, value)| {
-                    // println!("{_name} is {value}");
-                    *value
-                }))
-                .map(|(pos, value)| {
-                    let x0 = SegmentValue::Exact(pos);
-                    let x1 = SegmentValue::Exact(pos + 1);
-                    let mut rect = Rectangle::new([(x0, 0.0), (x1, value)], PURPLE.filled());
-                    rect.set_margin(0, 0, 1, 1);
-                    rect
-                }),
+            Histogram::vertical(&chart)
+                .style(PURPLE.filled())
+                .margin(0)
+                .data((0usize..).zip(just_values)),
         )
         .unwrap();
 
