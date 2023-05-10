@@ -1,5 +1,6 @@
 *.class
 *.sw?
+*.pyc
 
 **/target
 *.png
