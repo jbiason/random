@@ -1,4 +1,4 @@
-use std::slice::Iter;
+use std::vec::IntoIter;
 
 use reqwest::blocking::Client;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -16,7 +16,7 @@ struct Punk {
 impl Punk {
     pub fn new(/* connection information here */) -> Self {
         Self {
-            url: "https://api.punkapi.com/v2/".into(),
+            url: "https://api.punkapi.com/v2/beers?per_page=10".into(),
             client: Client::builder()
                 .user_agent(LIB_USER_AGENT)
                 .build()
@@ -32,7 +32,9 @@ impl Punk {
     }
 
     pub fn get<T: DeserializeOwned>(&self, page: u16) -> Result<T, reqwest::Error> {
-        Ok(self.client.get(&self.url).send()?.json::<T>()?)
+        let url = format!("{url}&page={page}", url=self.url, page=page);
+        let data = self.client.get(&url).send()?;
+        Ok(data.json::<T>()?)
     }
 }
 
@@ -48,8 +50,7 @@ struct Beer {
 /// This is the magical iterator that gets stuff from the internet
 struct BeerIter<'a> {
     connection: &'a Punk,
-    data: Vec<Beer>,
-    iter: Option<Iter<'a, Beer>>,
+    iter: IntoIter<Beer>,
     page: u16,
 }
 
@@ -57,9 +58,8 @@ impl<'a> BeerIter<'a> {
     pub fn new(connection: &'a Punk) -> Result<Self, reqwest::Error> {
         let mut result = Self {
             connection,
-            data: Vec::new(),
-            iter: None,
-            page: 1
+            iter: vec![].into_iter(),
+            page: 1,
         };
         result.next_page()?;
         Ok(result)
@@ -67,22 +67,23 @@ impl<'a> BeerIter<'a> {
 
     fn next_page(&mut self) -> Result<(), reqwest::Error> {
         let page = self.connection.get::<Vec<Beer>>(self.page)?;
-        self.data = page;
-        self.iter = Some(self.data.iter());
+        self.iter = page.into_iter();
         self.page += 1;
         Ok(())
     }
 }
 
 impl<'a> Iterator for BeerIter<'a> {
-    type Item = &'a Beer;
+    type Item = Beer;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(record) = self.iter?.next() {
-            Some(record)
-        } else {
-            self.next_page();
-            Some(self.iter?.next().unwrap())
+        let next_item = self.iter.next();
+        match next_item {
+            Some(record) => Some(record),
+            None => {
+                self.next_page().unwrap();
+                self.next()
+            }
         }
     }
 }
@@ -90,10 +91,10 @@ impl<'a> Iterator for BeerIter<'a> {
 fn main() {
     let connection = Punk::new();
     let beers = connection.beers().expect("Failed to get the initial data");
-    // for beer in beers {
-    //     println!("     ID: {}", beer.id);
-    //     println!("   Name: {}", beer.name);
-    //     println!("Tagline: {}\n", beer.tagline);
-    // }
+    for beer in beers {
+        println!("     ID: {}", beer.id);
+        println!("   Name: {}", beer.name);
+        println!("Tagline: {}\n", beer.tagline);
+    }
     println!("Hello, world!");
 }
