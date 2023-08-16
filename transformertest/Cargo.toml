@@ -1,0 +1,11 @@
+[package]
+name = "transformertest"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1.73"
+supertrait = "0.1.0"
+tokio = { version = "1.31.0", features = ["rt", "macros", "fs", "io-util", "sync"] }
