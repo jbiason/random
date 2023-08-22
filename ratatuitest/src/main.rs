@@ -14,13 +14,13 @@ use ratatui::Frame;
 use ratatui::Terminal;
 use std::error::Error;
 
-struct Cursor {
+struct Selector {
     pub state: ListState,
     pub values: Vec<String>,
     pub selected: Vec<usize>,
 }
 
-impl Cursor {
+impl Selector {
     pub fn new(values: Vec<String>) -> Self {
         Self {
             state: ListState::default().with_selected(Some(0)),
@@ -89,7 +89,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let cursor_pos = terminal.get_cursor().unwrap();
 
-    let mut options = Cursor::new(vec![
+    let mut options = Selector::new(vec![
         "Option 1".into(),
         "Option 2".into(),
         "Option 3".into(),
@@ -112,7 +112,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
     pos: &Rect,
-    values: &mut Cursor,
+    values: &mut Selector,
 ) -> std::io::Result<()> {
     loop {
         terminal.draw(|f| ui(f, pos, values))?;
@@ -136,7 +136,7 @@ fn run_app<B: Backend>(
     Ok(())
 }
 
-fn ui<B: Backend>(f: &mut Frame<B>, pos: &Rect, cursor: &mut Cursor) {
+fn ui<B: Backend>(f: &mut Frame<B>, pos: &Rect, cursor: &mut Selector) {
     let items = cursor
         .values
         .iter()
@@ -145,16 +145,15 @@ fn ui<B: Backend>(f: &mut Frame<B>, pos: &Rect, cursor: &mut Cursor) {
             ListItem::new(format!(
                 "{} {}",
                 if cursor.selected.contains(&pos) {
-                    "✔"
+                    "[x]"
                 } else {
-                    "✕"
+                    "[ ]"
                 },
                 desc.to_string()
             ))
         })
         .collect::<Vec<ListItem>>();
     let list = List::new(items)
-        // .block(Block::default().borders(Borders::ALL))
         .highlight_style(Style::default().add_modifier(Modifier::BOLD))
         .highlight_symbol("> ");
     f.render_stateful_widget(list, *pos, &mut cursor.state);
