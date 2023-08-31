@@ -24,17 +24,18 @@ async fn main() {
 
     println!("Run 3 secs");
     let mut cmd = Command::new(&sleep).arg("3s").spawn().unwrap();
-
     if let Err(_) = timeout(Duration::from_secs(4), cmd.wait()).await {
         println!("Got timeout!");
+        cmd.kill().await.unwrap();
     } else {
         println!("No timeout");
     }
 
-    println!("Run 5 secs");
-    let mut cmd = Command::new(&sleep).arg("5s").spawn().unwrap();
+    println!("Run 25 secs");
+    let mut cmd = Command::new(&sleep).arg("25s").spawn().unwrap();
     if let Err(_) = timeout(Duration::from_secs(4), cmd.wait()).await {
-        println!("Got timeout")
+        println!("Got timeout");
+        cmd.kill().await.unwrap();
     } else {
         println!("No timeout");
     }
