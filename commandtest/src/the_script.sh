@@ -13,6 +13,12 @@ do
 		echo "   And keeps going till there are no more spaces-prefixes"
 	fi
 
+	if (( $loop%8 == 0)); then
+		# ERR is just to make sure we find it easily in the logs
+		echo "ERR: Sometimes, I also write in stderr!" >&2
+		echo "ERR: Just for funsies!" >&2
+	fi
+
 	echo "Like this."
 	echo "Then you're good to go."
 	echo ""

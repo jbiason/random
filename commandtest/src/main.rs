@@ -1,6 +1,6 @@
 use std::ffi::OsString;
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -25,10 +25,13 @@ fn main() {
     let mut cmd = Command::new(bash)
         .arg(the_script)
         .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
         .spawn()
         .unwrap();
 
     let stdout = cmd.stdout.take().unwrap();
+    let mut stderr = cmd.stderr.take().unwrap();
+
     let writer_pid = std::thread::spawn(move || {
         let reader = BufReader::new(stdout);
         let lines = reader.lines();
@@ -55,5 +58,13 @@ fn main() {
 
     cmd.wait().unwrap();
     let warnings = writer_pid.join().unwrap();
+
+    let mut buffer = String::new();
+    stderr.read_to_string(&mut buffer).unwrap();
+
+    let mut file = OpenOptions::new().append(true).open("script.log").unwrap();
+    file.write(buffer.as_bytes()).unwrap();
+
     println!("Warnings:\n{:?}", warnings);
+    println!("ERR:\n{:?}", buffer)
 }
