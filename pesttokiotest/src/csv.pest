@@ -1,0 +1,7 @@
+csv = { SOI ~ line ~ EOI }
+
+line = _{ (value | group)+ }
+value = @{ (ASCII_ALPHANUMERIC | ".")+ }
+group = { "(" ~ line ~ ")" }
+
+WHITESPACE = _{ (" " | "\t") }
