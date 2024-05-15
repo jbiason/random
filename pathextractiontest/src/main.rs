@@ -1,10 +1,11 @@
+use std::ffi::OsStr;
 use std::path::Path;
 
 fn extract<'a>(
     path: &'a Path,
     current_name: Option<&'a str>,
 ) -> Option<(&'a Path, Option<&'a str>)> {
-    let name = path.file_name().map(|x| x.to_str()).flatten();
+    let name = path.file_name().map(OsStr::to_str).flatten();
     let parent = path.parent()?;
 
     // println!("path={path:?}, current_name={current_name:?}, parent={parent:?}, name={name:?}");
@@ -30,7 +31,7 @@ mod test {
         assert_eq!(result.0, Path::new("something"));
         assert_eq!(result.1, Some("default"));
     }
-    
+
     #[test]
     fn child() {
         let result = extract(Path::new("something/.run/special/path"), None).unwrap();
