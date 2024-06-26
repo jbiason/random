@@ -1,11 +1,18 @@
 use std::path::Path;
 
-use tracing_subscriber::prelude::*;
+use tracing::level_filters::LevelFilter;
+use tracing_subscriber::{prelude::*, EnvFilter};
 
 fn main() {
+    let env_filter = EnvFilter::builder()
+        .with_default_directive(LevelFilter::OFF.into())
+        .with_env_var("LOG")
+        .from_env()
+        .unwrap();
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
-        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .with(env_filter)
         .init();
     println!("Hello, world!");
 
@@ -14,4 +21,6 @@ fn main() {
 
     tracing::debug!(a);
     tracing::info!(?p);
+
+    tracing::error!("No!");
 }
