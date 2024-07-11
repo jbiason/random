@@ -3,6 +3,9 @@ use logos::Logos;
 #[derive(Logos, Debug)]
 #[logos(skip r"[ \t\n\r]")]
 enum Token<'a> {
+    #[regex(r#"\/\*[^\/\*]*\*\/"#, |lex| lex.slice())]
+    MultilineComment(&'a str),
+
     #[regex(r#""[^"]+""#, |lex| lex.slice().trim_start_matches('"').trim_end_matches('"'))]
     #[regex("[a-zA-Z0-9]+", |lex| lex.slice())]
     Keyword(&'a str),
@@ -46,6 +49,10 @@ fn main() {
 
     let source = std::fs::read("src/example.foam").unwrap();
     let lex = Token::lexer(&std::str::from_utf8(&source).unwrap());
+    let content = lex.collect::<Vec<_>>();
+    println!("{content:#?}");
+
+    let lex = Token::lexer("/* multiline\ncomment*/var value;");
     let content = lex.collect::<Vec<_>>();
     println!("{content:#?}");
 }
