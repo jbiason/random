@@ -1,0 +1,88 @@
+// List of variables to be checked; optional, since MD5 validation does not use any variables.
+variables ("phi" "meanT");
+
+// Execution is run in sequence: If the first run ("quick") fails, then the second run ("short")
+// is run, and if that fails, the third is run ("long"), and so on. On the other hand, the
+// execution of the runs stops on the first full success.
+// This example is a bit of a stretch -- why would be want to run the same case 4 different
+// times? -- but it shows that, if that necessity appears in the future, we can support it.
+// It also shows that one can have mixed reduced and non-reduce runs (e.g., there could be
+// just one run without reduction, or just one reduced run, and so on.)
+// We could also add support in Verify to only execute runs with a specific name, allowing
+// to run all examples in their non-reduced mode (as long as they all name their non-reduced
+// mode with the same name, that is).
+// Names are free form, and we could use them to defined the run-dir, e.g., 
+// "short" validation will be run in ".run-short", "long" in ".run-long" and so on.
+
+runs 
+(
+    // This is a quick test: The example is reduced to just 2 timesteps, and we check the
+    // resulting file against its MD5 hash.
+	quick {
+		steps 2;
+		generatedFile "postProcessing/2/blah";
+		// because the validation is in MD5 format, there is no need to have a referenceFile
+		failIf {
+			md5Differs "123123";
+		}
+	}
+	
+	// In case the MD5 fails, the case is run again, but this time reduced to 10 timesteps.
+	// This run also includes continuations, by changing the listed files to make one follow
+	// the timesteps of the previous. The run will fail if relative or absolute differences are
+	// above 0.
+	short {
+		steps 10;
+		generatedFile "postProcessing/10/blah";
+		referenceFile "verification/10/blah";
+		// No tolerances mean "it will warn if the values are not the same"
+		
+		// This makes the continuations explicit, by specificing files that form a single run.
+		continuations (
+			"system/caseSetupDict.initial"
+			"system/caseSetupDict.continuation1"
+			"system/caseSetupDict.continuation2"
+		);
+	}
+	
+	// If in 10 timestemps the values do not match the reference file, a 100 timesteps run is
+	// done. There is no continuation, and for this run to fail, both absolute and relative 
+	// tolerances must be above the designed threshold.
+	long {
+		steps 100;
+		generatedFile "postProcessing/100/blah";
+		referenceFile "verification/100/blah";
+		failIf {
+			absolute 10;
+			relative 10;
+			// will fail is the absolute difference is above 10 AND the relative difference
+			// is above 10;
+			operator and;
+		}
+	}
+	
+	// If the 100 timesteps fails, then we run the example a 4th time, this time without any
+	// reductions (the "steps" property is not set in this run). There are no continations
+	// either.
+	"run till completion" {
+		// With no steps, there is no reduction
+		// (maybe we need something to tell that there is no reduction explicitly?)
+		generatedFile "postProcessing/20000/blah;"
+		referenceFile "verification/20000/blah";
+		failIf {
+			absolute 20;
+			relative 20;
+			// no operator means OR, so example will fail if the absolute different is 
+			// above 20 OR the relative difference is above 20
+		}
+	}
+);
+
+// This is used for filtering.
+tags ("GIB" "AES" "compressible");
+
+// Only present if the example can't be run in some platform.
+unstable {
+	operatingSystem windows; // valid values: "windows", "linux", "all"
+	reason "Allrun uses Python, and Python isn't usually available on Windows";
+}
