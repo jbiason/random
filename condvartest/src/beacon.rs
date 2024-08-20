@@ -31,8 +31,9 @@ impl Beacon {
     }
 
     pub fn release(&self, leases: usize) {
-        println!("Releasing {leases} leases");
+        println!("Trying to release {leases} leases");
         let control = self.lock.lock().unwrap();
+        println!("Releasing {leases} leases");
         control.fetch_add(leases, Ordering::SeqCst);
         self.guard.notify_all();
     }
