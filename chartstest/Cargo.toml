@@ -1,0 +1,7 @@
+[package]
+name = "chartstest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+charts = "0.3.0"
