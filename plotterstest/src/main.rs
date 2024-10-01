@@ -1,21 +1,18 @@
+use std::cmp::Ordering;
+
+use plotters::chart::LabelAreaPosition;
+use plotters::element::Rectangle;
 use plotters::prelude::BitMapBackend;
 use plotters::prelude::ChartBuilder;
 use plotters::prelude::IntoDrawingArea;
 use plotters::prelude::IntoSegmentedCoord;
 use plotters::prelude::SegmentValue;
-use plotters::series::Histogram;
 use plotters::style::full_palette::PURPLE;
-use plotters::style::text_anchor::HPos;
-use plotters::style::text_anchor::Pos;
-use plotters::style::text_anchor::VPos;
 use plotters::style::Color;
-use plotters::style::FontTransform;
-use plotters::style::IntoFont;
-use plotters::style::TextStyle;
 use plotters::style::WHITE;
 
 fn main() {
-    let values = [
+    let mut values = [
         ("channel395_0", 7.94),
         ("meshBlockPipe_0", 0.19),
         ("3DValve_0", 73.99),
@@ -161,57 +158,58 @@ fn main() {
         ("2DCylinderPar_0", 13.26),
     ];
 
-    let root = BitMapBackend::new("cases.png", (1920, 720)).into_drawing_area();
+    values.sort_by(|first, second| {
+        if first.1 > second.1 {
+            Ordering::Greater
+        } else {
+            Ordering::Less
+        }
+    });
+
+    let root = BitMapBackend::new("cases.png", (2560, 1440)).into_drawing_area();
     root.fill(&WHITE).unwrap();
 
     let max = values
         .iter()
         .map(|(_name, value)| value)
         .fold(0.0f64, |acc, x| if acc > *x { acc } else { *x });
-    let mut chart = ChartBuilder::on(&root)
-        .x_label_area_size(150)
-        .y_label_area_size(50)
-        .margin(5)
-        // .caption("Cases", ("sans-serif bold", 40.0))
-        .build_cartesian_2d((0..values.len()).into_segmented(), 0.0f64..max)
-        .unwrap();
 
-    let pos = Pos::new(HPos::Left, VPos::Bottom);
-    let x_label_style = TextStyle::from(("Ubuntu Medium", 10).into_font())
-        .pos(pos)
-        .transform(FontTransform::Rotate270);
-    chart
-        .configure_mesh()
-        .x_labels(values.len())
-        .x_label_formatter(&|pos| {
+    let mut ctx = ChartBuilder::on(&root)
+        .set_label_area_size(LabelAreaPosition::Left, 40)
+        .set_label_area_size(LabelAreaPosition::Bottom, 40)
+        .margin_left(250)
+        .build_cartesian_2d(0.0..max, (0..values.len()).into_segmented())
+        .unwrap();
+    ctx.configure_mesh()
+        .y_labels(values.len())
+        .y_label_formatter(&|pos| {
             let pos: usize = match pos {
                 SegmentValue::CenterOf(t) => *t,
                 SegmentValue::Exact(t) => *t,
                 SegmentValue::Last => values.len() - 1,
             };
-            let label = if pos > values.len() - 1 {
-                String::from("")
+            if pos >= values.len() {
+                String::new()
             } else {
                 let record = values[pos];
                 record.0.to_string()
-            };
-            println!("Label for {pos:?} is {label}");
-            label
+            }
         })
-        .x_label_style(x_label_style)
-        .disable_x_mesh()
         .draw()
         .unwrap();
+    let data = values.iter().map(|x| x.1).collect::<Vec<_>>();
 
-    let just_values = values.map(|(_name, value)| value);
-    chart
-        .draw_series(
-            Histogram::vertical(&chart)
-                .style(PURPLE.filled())
-                .margin(0)
-                .data((0usize..).zip(just_values)),
-        )
-        .unwrap();
-
+    ctx.draw_series((0..).zip(data.iter()).map(|(y, x)| {
+        let mut bar = Rectangle::new(
+            [
+                (0.0, SegmentValue::Exact(y)),
+                (*x, SegmentValue::Exact(y + 1)),
+            ],
+            PURPLE.filled(),
+        );
+        bar.set_margin(1, 1, 0, 0);
+        bar
+    }))
+    .unwrap();
     root.present().unwrap();
 }
